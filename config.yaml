@@ -1,0 +1,99 @@
+# Pest Classification Model Configuration
+
+# Project paths (relative to project root)
+paths:
+  data_dir: "data"
+  raw_data_dir: "data/raw"
+  processed_data_dir: "data/processed"
+  outputs_dir: "outputs"
+  checkpoints_dir: "outputs/checkpoints"
+  logs_dir: "outputs/logs"
+  predictions_dir: "outputs/predictions"
+
+# Dataset configuration
+dataset:
+  name: "pest_classification"
+  num_classes: null # Will be inferred from data
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+  image_size: [224, 224] # [height, width]
+  channels: 3
+
+# Data augmentation
+augmentation:
+  train:
+    horizontal_flip: true
+    rotation_range: 15
+    brightness_range: [0.8, 1.2]
+    contrast_range: [0.8, 1.2]
+    saturation_range: [0.8, 1.2]
+    random_crop: true
+  val:
+    # No augmentation for validation
+    enabled: false
+
+# Model configuration
+model:
+  name: "resnet50" # Options: resnet50, resnet34, efficientnet_b0, efficientnet_b4, mobilenet_v3
+  pretrained: true
+  num_classes: null # Will be set automatically
+  dropout: 0.5
+
+# Training configuration
+training:
+  batch_size: 32
+  num_epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: "adam" # Options: adam, sgd, adamw
+  scheduler: "cosine" # Options: cosine, step, plateau, none
+  scheduler_params:
+    cosine:
+      T_max: 50
+      eta_min: 0.0001
+    step:
+      step_size: 10
+      gamma: 0.1
+    plateau:
+      patience: 5
+      factor: 0.5
+      min_lr: 0.00001
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+    monitor: "val_loss"
+  mixed_precision: true
+  gradient_clip: 1.0
+
+# Loss function
+loss:
+  name: "cross_entropy" # Options: cross_entropy, focal_loss, label_smoothing
+  label_smoothing: 0.1
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+# Evaluation metrics
+metrics:
+  - "accuracy"
+  - "top_k_accuracy"
+  - "precision"
+  - "recall"
+  - "f1_score"
+  - "confusion_matrix"
+
+# Logging
+logging:
+  level: "INFO" # DEBUG, INFO, WARNING, ERROR
+  log_interval: 10 # Log every N batches
+  save_checkpoint_interval: 5 # Save checkpoint every N epochs
+  tensorboard: true
+
+# Device configuration
+device:
+  use_gpu: true
+  gpu_ids: [0] # List of GPU IDs to use
+
+# Random seed for reproducibility
+seed: 42
