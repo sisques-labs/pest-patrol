@@ -66,9 +66,6 @@ Thumbs.db
 # Config (optional - you may want to commit this)
 # config.yaml
 
-# Data
-data/
-
 # Outputs
 outputs/
 
