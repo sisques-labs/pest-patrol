@@ -1,5 +1,16 @@
 # Pest Classification Model Configuration
 
+# Project root directory (where this config file is located)
+project:
+  version: "0.1.0"
+  name: "Pest Patrol"
+  description: "AI-powered pest classification system"
+  author: "Sisques Labs"
+  email: "info@sisqueslabs.com"
+  url: "https://www.sisqueslabs.com"
+  license: "MIT"
+  copyright: "Copyright (c) 2025 Sisques Labs"
+
 # Project paths (relative to project root)
 paths:
   data_dir: "data"
