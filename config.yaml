@@ -46,10 +46,19 @@ augmentation:
 
 # Model configuration
 model:
-  name: "resnet50" # Options: resnet50, resnet34, efficientnet_b0, efficientnet_b4, mobilenet_v3
+  name: "efficientnet_b4" # Options: resnet50, resnet34, efficientnet_b0, efficientnet_b4, mobilenet_v3
   pretrained: true
   num_classes: null # Will be set automatically
   dropout: 0.5
+
+# Multi-model training configuration (for train_multi.py)
+multi_model:
+  models:
+    - "resnet34"
+    - "resnet50"
+    - "efficientnet_b0"
+    - "efficientnet_b4"
+    - "mobilenet_v3_large"
 
 # Training configuration
 training:

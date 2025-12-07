@@ -225,7 +225,21 @@ def main():
 
     # Determine checkpoint path
     if args.checkpoint is None:
-        checkpoint_path = Path(config.paths.outputs_dir) / "checkpoints" / "best_model.pth"
+        # Try new structure first: outputs/models/{model_name}/checkpoints/best_model.pth
+        model_name = config.model.name
+        new_path = Path(config.paths.outputs_dir) / "models" / model_name / "checkpoints" / "best_model.pth"
+        # Fallback to old structure: outputs/checkpoints/best_model.pth
+        old_path = Path(config.paths.outputs_dir) / "checkpoints" / "best_model.pth"
+        
+        if new_path.exists():
+            checkpoint_path = new_path
+        elif old_path.exists():
+            checkpoint_path = old_path
+            logger.warning(f"Using old checkpoint structure. Consider using: {new_path}")
+        else:
+            raise FileNotFoundError(
+                f"Checkpoint not found. Tried:\n  - {new_path}\n  - {old_path}"
+            )
     else:
         checkpoint_path = Path(args.checkpoint)
 

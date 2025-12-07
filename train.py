@@ -43,25 +43,29 @@ def main():
     # Setup paths
     project_root = Path(__file__).parent
 
+    # Create output directories (organized by model name)
+    base_output_dir = Path(config.paths.outputs_dir)
+    model_name = config.model.name
+    output_dir = base_output_dir / "models" / model_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "checkpoints").mkdir(parents=True, exist_ok=True)
+    (output_dir / "logs").mkdir(parents=True, exist_ok=True)
+    
     # Setup logger
     logger = setup_logger(
         level=config.get("logging", {}).get("level", "INFO"),
-        log_file=Path(config.paths.logs_dir) / "training.log",
+        log_file=output_dir / "logs" / "training.log",
     )
     logger.info("=" * 50)
     logger.info("Starting Pest Classification Training")
     logger.info("=" * 50)
+    logger.info(f"Model: {model_name}")
+    logger.info(f"Output directory: {output_dir}")
 
     # Device setup
     use_gpu = config.get("device", {}).get("use_gpu", True)
     device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
-
-    # Create output directories
-    output_dir = Path(config.paths.outputs_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    Path(config.paths.checkpoints_dir).mkdir(parents=True, exist_ok=True)
-    Path(config.paths.logs_dir).mkdir(parents=True, exist_ok=True)
 
     # Get data transforms
     train_transform = get_transforms(
@@ -96,10 +100,11 @@ def main():
     logger.info(f"Validation samples: {len(val_loader.dataset)}")
     logger.info(f"Test samples: {len(test_loader.dataset)}")
 
-    # Save class mapping
+    # Save class mapping (save in base output dir for shared access)
     import json
 
-    class_mapping_path = output_dir / "class_mapping.json"
+    base_output_dir = Path(config.paths.outputs_dir)
+    class_mapping_path = base_output_dir / "class_mapping.json"
     with open(class_mapping_path, "w") as f:
         json.dump(class_to_idx, f, indent=2)
     logger.info(f"Class mapping saved to: {class_mapping_path}")
