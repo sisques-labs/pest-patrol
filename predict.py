@@ -1,11 +1,14 @@
 """Prediction script for pest classification."""
 
 import argparse
+import base64
+import io
 import json
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
+import requests
 import torch
 import torch.nn.functional as F
 from PIL import Image
@@ -65,8 +68,62 @@ def load_model(
     return model, class_to_idx
 
 
+def load_image_from_source(image_source: str) -> Image.Image:
+    """Load image from various sources: file path, URL, or base64 string.
+
+    Args:
+        image_source: Path to image file, URL, or base64 encoded string
+
+    Returns:
+        PIL Image object
+    """
+    # Check if it's a URL first (most specific check)
+    if image_source.startswith("http://") or image_source.startswith("https://"):
+        try:
+            response = requests.get(image_source, timeout=10)
+            response.raise_for_status()
+            image = Image.open(io.BytesIO(response.content)).convert("RGB")
+            return image
+        except Exception as e:
+            raise ValueError(f"Failed to load image from URL {image_source}: {e}")
+
+    # Check if it's a base64 string (data URI format or raw base64)
+    if image_source.startswith("data:image"):
+        try:
+            # Handle data URI format: data:image/png;base64,...
+            base64_data = image_source.split(",")[1]
+            image_bytes = base64.b64decode(base64_data)
+            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            return image
+        except Exception as e:
+            raise ValueError(f"Failed to decode base64 data URI: {e}")
+
+    # Try as file path first (before attempting raw base64)
+    image_path = Path(image_source)
+    if image_path.exists():
+        try:
+            image = Image.open(image_path).convert("RGB")
+            return image
+        except Exception as e:
+            raise ValueError(f"Failed to load image from file {image_source}: {e}")
+
+    # Last resort: try as raw base64 string
+    # Only attempt if string is reasonably long and doesn't look like a path
+    if len(image_source) > 50 and not any(c in image_source for c in ["\\", "/", ":"]):
+        try:
+            # Try to decode as base64
+            image_bytes = base64.b64decode(image_source)
+            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            return image
+        except Exception:
+            # If base64 decoding fails, fall through to error
+            pass
+
+    raise ValueError(f"Invalid image source: {image_source}")
+
+
 def predict_image(
-    image_path: str,
+    image_source: Union[str, Image.Image],
     model: torch.nn.Module,
     class_to_idx: dict,
     config,
@@ -76,7 +133,7 @@ def predict_image(
     """Predict pest class for a single image.
 
     Args:
-        image_path: Path to image file
+        image_source: Path to image file, URL, base64 string, or PIL Image
         model: Trained model
         class_to_idx: Mapping from class names to indices
         config: Configuration object
@@ -86,8 +143,13 @@ def predict_image(
     Returns:
         List of (class_name, probability) tuples, sorted by probability
     """
-    # Load and preprocess image
-    image = Image.open(image_path).convert("RGB")
+    # Load image if it's a string (path, URL, or base64)
+    if isinstance(image_source, str):
+        image = load_image_from_source(image_source)
+    elif isinstance(image_source, Image.Image):
+        image = image_source.convert("RGB")
+    else:
+        raise ValueError(f"Invalid image_source type: {type(image_source)}")
 
     # Get transforms
     transform = get_transforms(
@@ -175,29 +237,12 @@ def main():
     model, class_to_idx = load_model(str(checkpoint_path), args.config, device)
 
     # Process image(s)
-    image_path = Path(args.image_path)
+    image_path_str = args.image_path
     all_predictions = {}
 
-    if image_path.is_file():
-        # Single image
-        logger.info(f"Predicting for image: {image_path}")
-        predictions = predict_image(
-            str(image_path),
-            model,
-            class_to_idx,
-            config,
-            device,
-            args.top_k,
-        )
-        all_predictions[str(image_path)] = predictions
-
-        # Print results
-        print(f"\nPredictions for {image_path.name}:")
-        print("-" * 50)
-        for class_name, prob in predictions:
-            print(f"  {class_name}: {prob*100:.2f}%")
-
-    elif image_path.is_dir():
+    # Check if it's a directory
+    image_path = Path(image_path_str)
+    if image_path.is_dir():
         # Directory of images
         valid_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
         image_files = [
@@ -222,9 +267,37 @@ def main():
             print("-" * 50)
             for class_name, prob in predictions:
                 print(f"  {class_name}: {prob*100:.2f}%")
-
     else:
-        raise ValueError(f"Invalid image path: {image_path}")
+        # Single image (file, URL, or base64)
+        logger.info(f"Predicting for image: {image_path_str[:100]}...")
+        try:
+            predictions = predict_image(
+                image_path_str,
+                model,
+                class_to_idx,
+                config,
+                device,
+                args.top_k,
+            )
+            # Use a descriptive key for the predictions dict
+            if image_path.is_file():
+                display_name = image_path.name
+            elif image_path_str.startswith("http"):
+                display_name = image_path_str.split("/")[-1][:50]
+            elif image_path_str.startswith("data:image") or len(image_path_str) > 100:
+                display_name = "base64_image"
+            else:
+                display_name = str(image_path_str)[:50]
+            
+            all_predictions[display_name] = predictions
+
+            # Print results
+            print(f"\nPredictions for {display_name}:")
+            print("-" * 50)
+            for class_name, prob in predictions:
+                print(f"  {class_name}: {prob*100:.2f}%")
+        except Exception as e:
+            raise ValueError(f"Failed to process image: {e}")
 
     # Save predictions if output path specified
     if args.output:
