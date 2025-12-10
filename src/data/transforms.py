@@ -1,6 +1,7 @@
 """Image transforms and data augmentation for pest classification."""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 import torch
 import torchvision.transforms as transforms
 from torchvision.transforms import functional as F
@@ -149,3 +150,4 @@ def get_transforms(
     )  # ImageNet normalization
 
     return transforms.Compose(transform_list)
+

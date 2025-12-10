@@ -100,3 +100,5 @@ class TensorBoardLogger:
     def close(self):
         """Close the writer."""
         self.writer.close()
+
+

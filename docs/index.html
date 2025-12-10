@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pest Patrol - AI-Powered Plant Disease Detection</title>
+    <meta
+      name="description"
+      content="A scalable deep learning framework for detecting and classifying plant pests and diseases using computer vision"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary-color: #2d8659;
+        --secondary-color: #4a9d6e;
+        --accent-color: #6bbf8a;
+        --dark-bg: #1a1a2e;
+        --darker-bg: #16213e;
+        --text-light: #e8f5e9;
+        --text-gray: #b0bec5;
+        --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gradient-green: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--text-light);
+        background: var(--dark-bg);
+        overflow-x: hidden;
+      }
+
+      /* Header & Navigation */
+      header {
+        background: rgba(26, 26, 46, 0.95);
+        backdrop-filter: blur(10px);
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        padding: 1rem 0;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      nav {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        background: var(--gradient-green);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--text-light);
+        text-decoration: none;
+        transition: color 0.3s;
+        font-weight: 500;
+      }
+
+      .nav-links a:hover {
+        color: var(--accent-color);
+      }
+
+      /* Hero Section */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(
+          circle,
+          rgba(74, 157, 110, 0.1) 0%,
+          transparent 70%
+        );
+        top: -250px;
+        right: -250px;
+        border-radius: 50%;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(
+          circle,
+          rgba(107, 191, 138, 0.1) 0%,
+          transparent 70%
+        );
+        bottom: -200px;
+        left: -200px;
+        border-radius: 50%;
+      }
+
+      .hero-content {
+        max-width: 900px;
+        z-index: 1;
+        position: relative;
+      }
+
+      .hero h1 {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      .hero .subtitle {
+        font-size: 1.5rem;
+        color: var(--text-gray);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+      }
+
+      .hero .description {
+        font-size: 1.1rem;
+        color: var(--text-gray);
+        margin-bottom: 2.5rem;
+        line-height: 1.8;
+        animation: fadeInUp 0.8s ease-out 0.4s both;
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeInUp 0.8s ease-out 0.6s both;
+      }
+
+      .btn {
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: inline-block;
+        border: 2px solid transparent;
+      }
+
+      .btn-primary {
+        background: var(--gradient-green);
+        color: white;
+        box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(56, 239, 125, 0.6);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      .btn-secondary:hover {
+        background: var(--accent-color);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      /* Sections */
+      section {
+        padding: 5rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .section-title {
+        font-size: 2.5rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Features Grid */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+      }
+
+      .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-color);
+        box-shadow: 0 10px 30px rgba(56, 239, 125, 0.2);
+      }
+
+      .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--accent-color);
+      }
+
+      .feature-card p {
+        color: var(--text-gray);
+        line-height: 1.8;
+      }
+
+      /* Code Blocks */
+      .code-block {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-left: 4px solid var(--accent-color);
+        overflow-x: auto;
+      }
+
+      .code-block code {
+        font-family: "Courier New", monospace;
+        color: var(--accent-color);
+        font-size: 0.9rem;
+      }
+
+      /* Stats Section */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+      }
+
+      .stat-card {
+        text-align: center;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .stat-number {
+        font-size: 3rem;
+        font-weight: bold;
+        background: var(--gradient-green);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .stat-label {
+        color: var(--text-gray);
+        margin-top: 0.5rem;
+      }
+
+      /* Installation Steps */
+      .steps {
+        display: grid;
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .step {
+        display: flex;
+        gap: 1.5rem;
+        align-items: start;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: 15px;
+        border-left: 4px solid var(--accent-color);
+      }
+
+      .step-number {
+        background: var(--gradient-green);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-content h3 {
+        margin-bottom: 0.5rem;
+        color: var(--accent-color);
+      }
+
+      .step-content p {
+        color: var(--text-gray);
+        margin-bottom: 1rem;
+      }
+
+      /* Footer */
+      footer {
+        background: var(--darker-bg);
+        padding: 3rem 2rem;
+        text-align: center;
+        margin-top: 5rem;
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .footer-links a {
+        color: var(--text-gray);
+        text-decoration: none;
+        transition: color 0.3s;
+      }
+
+      .footer-links a:hover {
+        color: var(--accent-color);
+      }
+
+      /* Animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .hero .subtitle {
+          font-size: 1.2rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .section-title {
+          font-size: 2rem;
+        }
+
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Scroll animations */
+      .fade-in {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s ease-out;
+      }
+
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="logo">🐛 Pest Patrol</div>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#installation">Installation</a></li>
+          <li><a href="#usage">Usage</a></li>
+          <li><a href="#models">Models</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Pest Patrol</h1>
+        <p class="subtitle">AI-Powered Plant Disease Detection</p>
+        <p class="description">
+          A scalable and modular deep learning framework for detecting and
+          classifying plant pests and diseases using computer vision. Built with
+          PyTorch, this project provides a clean, production-ready solution for
+          agricultural monitoring and plant health assessment.
+        </p>
+        <div class="cta-buttons">
+          <a href="#installation" class="btn btn-primary">Get Started</a>
+          <a href="https://github.com" class="btn btn-secondary"
+            >View on GitHub</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="fade-in">
+      <h2 class="section-title">Key Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Multi-class Classification</h3>
+          <p>
+            Classify multiple pest and disease categories simultaneously with
+            state-of-the-art deep learning models.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏗️</div>
+          <h3>Modular Architecture</h3>
+          <p>
+            Clean, scalable codebase with dedicated modules for data, models,
+            training, and utilities. Easy to extend and customize.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚙️</div>
+          <h3>Flexible Configuration</h3>
+          <p>
+            YAML-based configuration system for easy customization of models,
+            training parameters, and data augmentation.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🚀</div>
+          <h3>Production Ready</h3>
+          <p>
+            Includes checkpointing, logging, TensorBoard integration, and
+            monitoring tools for production deployment.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Multiple Architectures</h3>
+          <p>
+            Support for various CNN architectures including ResNet,
+            EfficientNet, MobileNet, and more.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Advanced Training</h3>
+          <p>
+            Mixed precision training, gradient clipping, multiple loss
+            functions, and learning rate scheduling.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="stats" class="fade-in">
+      <h2 class="section-title">Project Highlights</h2>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-number">30+</div>
+          <div class="stat-label">Plant Categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">50K+</div>
+          <div class="stat-label">Training Images</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">10+</div>
+          <div class="stat-label">Model Architectures</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Open Source</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="installation" class="fade-in">
+      <h2 class="section-title">Installation</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Clone the Repository</h3>
+            <p>Get the latest version of Pest Patrol from GitHub</p>
+            <div class="code-block">
+              <code>git clone &lt;repository-url&gt;<br />cd pest-patrol</code>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Create Virtual Environment</h3>
+            <p>Set up an isolated Python environment (recommended)</p>
+            <div class="code-block">
+              <code
+                >python -m venv venv<br />source venv/bin/activate # On
+                macOS/Linux<br />venv\Scripts\activate # On Windows</code
+              >
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Install Dependencies</h3>
+            <p>Install all required packages from requirements.txt</p>
+            <div class="code-block">
+              <code>pip install -r requirements.txt</code>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Verify Installation</h3>
+            <p>Test that everything is set up correctly</p>
+            <div class="code-block">
+              <code
+                >python -c "from src.models import create_model; print('✓
+                Installation successful!')"</code
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="usage" class="fade-in">
+      <h2 class="section-title">Quick Start</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Prepare Your Dataset</h3>
+            <p>Organize your images in folders, one per class:</p>
+            <div class="code-block">
+              <code
+                >data/raw/<br />├── Apple___Apple_scab/<br />├──
+                Apple___healthy/<br />└── Tomato___Bacterial_spot/</code
+              >
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Configure Training</h3>
+            <p>Edit config.yaml to set your preferences:</p>
+            <div class="code-block">
+              <code
+                >model:<br />
+                name: "resnet50"<br />
+                pretrained: true<br /><br />training:<br />
+                batch_size: 32<br />
+                num_epochs: 50</code
+              >
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Train the Model</h3>
+            <p>Start training with a single command:</p>
+            <div class="code-block">
+              <code>python train.py</code>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Make Predictions</h3>
+            <p>Use the trained model to classify new images:</p>
+            <div class="code-block">
+              <code
+                >python predict.py path/to/image.jpg<br />python predict.py
+                path/to/images/ --top-k 3</code
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="models" class="fade-in">
+      <h2 class="section-title">Available Models</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>ResNet Family</h3>
+          <p>
+            ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152. Excellent
+            balance of accuracy and speed. ResNet-50 recommended for most use
+            cases.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>EfficientNet Family</h3>
+          <p>
+            EfficientNet-B0 through B4. Best balance of accuracy and efficiency.
+            Optimized for both performance and resource usage.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>MobileNet Family</h3>
+          <p>
+            MobileNet-V3 Small and Large. Optimized for mobile devices and edge
+            deployment. Perfect for real-time applications.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="advanced" class="fade-in">
+      <h2 class="section-title">Advanced Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>🔬 Data Augmentation</h3>
+          <p>
+            Comprehensive augmentation strategies including random cropping,
+            rotation, brightness/contrast adjustments, and color jittering to
+            improve model generalization.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>📈 Training Utilities</h3>
+          <p>
+            Built-in checkpointing, early stopping, learning rate scheduling
+            (Cosine, Step, Plateau), and gradient clipping for stable training.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>🎯 Loss Functions</h3>
+          <p>
+            Support for Cross Entropy, Focal Loss (for imbalanced datasets), and
+            Label Smoothing to reduce overconfidence.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>📊 Monitoring</h3>
+          <p>
+            TensorBoard integration for real-time training visualization. Track
+            loss, accuracy, learning rate, and more.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>⚡ Mixed Precision</h3>
+          <p>
+            Faster training with reduced memory usage using automatic mixed
+            precision. Enabled by default for optimal performance.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>🔄 Easy Inference</h3>
+          <p>
+            Simple command-line interface for making predictions. Support for
+            single images, batch processing, and JSON output.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-content">
+        <h3 style="margin-bottom: 1rem; color: var(--accent-color)">
+          Pest Patrol
+        </h3>
+        <p style="color: var(--text-gray); margin-bottom: 2rem">
+          Made with ❤️ for the agricultural community
+        </p>
+        <div class="footer-links">
+          <a href="https://github.com">GitHub</a>
+          <a href="#features">Features</a>
+          <a href="#installation">Documentation</a>
+          <a href="https://www.sisqueslabs.com">Sisques Labs</a>
+        </div>
+        <p style="color: var(--text-gray); margin-top: 2rem; font-size: 0.9rem">
+          © 2025 Sisques Labs. Built with PyTorch and torchvision.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Scroll animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll(".fade-in").forEach((el) => {
+        observer.observe(el);
+      });
+
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

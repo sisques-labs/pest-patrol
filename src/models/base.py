@@ -37,3 +37,5 @@ class BaseClassifier(nn.Module, ABC):
             Number of parameters
         """
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
+

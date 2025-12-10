@@ -309,3 +309,5 @@ class Trainer:
         self.logger.info(f"Best validation accuracy: {self.best_val_acc*100:.2f}%")
 
         return history
+
+
