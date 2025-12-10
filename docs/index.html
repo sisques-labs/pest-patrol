@@ -98,6 +98,7 @@
         text-align: center;
         padding: 2rem 0;
         width: 100%;
+        margin: 0;
         background: linear-gradient(
           135deg,
           #1a1a2e 0%,
@@ -105,7 +106,7 @@
           #0f3460 100%
         );
         position: relative;
-        overflow: hidden;
+        overflow-x: hidden;
       }
 
       .hero::before {
@@ -215,6 +216,13 @@
         padding: 5rem 2rem;
         max-width: 1200px;
         margin: 0 auto;
+      }
+
+      /* Hero exception - full width */
+      section.hero {
+        max-width: none;
+        margin: 0;
+        padding: 2rem 0;
       }
 
       .section-title {
